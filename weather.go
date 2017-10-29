@@ -7,6 +7,7 @@ import (
   "io/ioutil"
   "log"
   "encoding/json"
+  "math"
 )
 
 const (
@@ -15,15 +16,26 @@ const (
 )
 
 type Weather struct {
-  Code string `json:"cod"`
-  City *City `json:"city"`
+  City *City
+  List []*Measurement
 }
 
 type City struct {
   Name string `json:"name"`
 }
 
-func getData() ([]byte) {
+type Measurement struct {
+  Date string `json:"dt_txt"`
+  Values Values `json:"main"`
+}
+
+type Values struct {
+  Temp float64 `json:"temp"`
+  Hum int `json:"humidity"`
+}
+
+// http://api.openweathermap.org/data/2.5/forecast?appid=dcf5b77beaf67157ac55a0263f8def87&q=Sumy,ua
+func getData() []byte {
   url := ROOT_URL + API_KEY + "&q=Sumy,ua"
 
   res, err := http.Get(url)
@@ -40,14 +52,19 @@ func getData() ([]byte) {
   return body
 }
 
-// http://api.openweathermap.org/data/2.5/forecast?appid=dcf5b77beaf67157ac55a0263f8def87&q=Sumy,ua
-func main() {
-  body := getData()
+func fartoCel(f float64) float64  {
+  return math.Ceil(f - 273.15)
+}
 
-  w := &Weather{}
-  if err := json.Unmarshal(body, &w); err != nil {
+func main() {
+  data := getData()
+
+  var w Weather
+  if err := json.Unmarshal(data, &w); err != nil {
     panic(err)
   }
 
-  fmt.Println(w.Code, w.City.Name)
+  for _, value := range w.List {
+    fmt.Println(value.Date, "||", fartoCel(value.Values.Temp))
+  }
 }
