@@ -14,13 +14,16 @@ const (
   API_KEY = "dcf5b77beaf67157ac55a0263f8def87"
 )
 
-type City struct {
+type Weather struct {
   Code string `json:"cod"`
-  // Temp float32
+  City *City `json:"city"`
 }
 
-// http://api.openweathermap.org/data/2.5/forecast?appid=dcf5b77beaf67157ac55a0263f8def87&q=Sumy,ua
-func main() {
+type City struct {
+  Name string `json:"name"`
+}
+
+func getData() ([]byte) {
   url := ROOT_URL + API_KEY + "&q=Sumy,ua"
 
   res, err := http.Get(url)
@@ -29,31 +32,22 @@ func main() {
   }
   defer res.Body.Close()
 
-  fmt.Println(res.Status)
-
   body, err := ioutil.ReadAll(res.Body)
   if err != nil {
     panic(err.Error())
   }
 
-  // var data map[string]interface{}
-  // if err := json.Unmarshal(body, &data); err != nil {
-  //   panic(err)
-  // }
+  return body
+}
 
-  c := &City{}
-  if err := json.Unmarshal(body, &c); err != nil {
+// http://api.openweathermap.org/data/2.5/forecast?appid=dcf5b77beaf67157ac55a0263f8def87&q=Sumy,ua
+func main() {
+  body := getData()
+
+  w := &Weather{}
+  if err := json.Unmarshal(body, &w); err != nil {
     panic(err)
   }
 
-  fmt.Println(c.Code)
-
-  // pritty, _ := json.MarshalIndent(data, "", "    ")
-
-  // os.Stdout.Write(pritty)
-
-  // decoder := json.NewDecoder(res.Body)
-
-  // body, _ := ioutil.ReadAll(resp.Body)
-  // fmt.Println(data)
+  fmt.Println(w.Code, w.City.Name)
 }
