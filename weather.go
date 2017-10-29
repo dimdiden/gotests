@@ -1,13 +1,15 @@
 package main
 
 import (
-  // "os"
-  "fmt"
+  "os"
+  // "fmt"
   "net/http"
   "io/ioutil"
   "log"
   "encoding/json"
   "math"
+  "github.com/olekukonko/tablewriter"
+  "strconv"
 )
 
 const (
@@ -21,17 +23,27 @@ type Weather struct {
 }
 
 type City struct {
-  Name string `json:"name"`
+  Name string
 }
 
 type Measurement struct {
   Date string `json:"dt_txt"`
-  Values Values `json:"main"`
+  Values *Values `json:"main"`
 }
 
 type Values struct {
   Temp float64 `json:"temp"`
   Hum int `json:"humidity"`
+}
+
+func (v *Values) Stringify() []string {
+  celsius := fartoCel(v.Temp)
+  return []string{strconv.FormatFloat(celsius, 'f', -1, 32), strconv.Itoa(v.Hum)}
+}
+
+func (m *Measurement) Stringify() []string {
+  s := []string{m.Date}
+  return append(s, m.Values.Stringify()...)
 }
 
 // http://api.openweathermap.org/data/2.5/forecast?appid=dcf5b77beaf67157ac55a0263f8def87&q=Sumy,ua
@@ -56,6 +68,7 @@ func fartoCel(f float64) float64  {
   return math.Ceil(f - 273.15)
 }
 
+// ================================
 func main() {
   data := getData()
 
@@ -64,7 +77,13 @@ func main() {
     panic(err)
   }
 
-  for _, value := range w.List {
-    fmt.Println(value.Date, "||", fartoCel(value.Values.Temp))
+  table := tablewriter.NewWriter(os.Stdout)
+  table.SetHeader([]string{"time", "temperature", "humidity"})
+
+  for _, msrmnt := range w.List {
+    table.Append(msrmnt.Stringify())
+    // fmt.Println(msrmnt.Date, "||", fartoCel(msrmnt.Values.Temp))
   }
+
+  table.Render()
 }
