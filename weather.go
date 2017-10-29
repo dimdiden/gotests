@@ -1,7 +1,7 @@
 package main
 
 import (
-  "os"
+  // "os"
   "fmt"
   "net/http"
   "io/ioutil"
@@ -36,14 +36,21 @@ func main() {
     panic(err.Error())
   }
 
-  var data map[string]interface{}
-  if err := json.Unmarshal(body, &data); err != nil {
+  // var data map[string]interface{}
+  // if err := json.Unmarshal(body, &data); err != nil {
+  //   panic(err)
+  // }
+
+  c := &City{}
+  if err := json.Unmarshal(body, &c); err != nil {
     panic(err)
   }
 
-  pritty, _ := json.MarshalIndent(data, "", "    ")
+  fmt.Println(c.Code)
 
-  os.Stdout.Write(pritty)
+  // pritty, _ := json.MarshalIndent(data, "", "    ")
+
+  // os.Stdout.Write(pritty)
 
   // decoder := json.NewDecoder(res.Body)
 
