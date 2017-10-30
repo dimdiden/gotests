@@ -1,14 +1,15 @@
 package main
 
 import (
-	"os"
-	// "fmt"
 	"encoding/json"
+	"flag"
+	// "fmt"
 	"github.com/olekukonko/tablewriter"
 	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -32,8 +33,8 @@ type Weather struct {
 }
 
 // http://api.openweathermap.org/data/2.5/forecast?appid=dcf5b77beaf67157ac55a0263f8def87&q=Sumy,ua
-func (w *Weather) GetData() {
-	url := ROOT_URL + API_KEY + "&q=Sumy,ua"
+func (w *Weather) GetData(city, country *string) {
+	url := ROOT_URL + API_KEY + "&q=" + *city + "," + *country
 
 	res, err := http.Get(url)
 	if err != nil {
@@ -80,14 +81,14 @@ func FartoCel(f float64) float64 {
 	return math.Ceil(f - 273.15)
 }
 
-// ================================
+// =============================================================
 func main() {
-	// data := getData()
-
 	var w Weather
-	// if err := json.Unmarshal(data, &w); err != nil {
-	// 	panic(err)
-	// }
-	w.GetData()
+
+	city := flag.String("city", "Sumy", "Choose the target city")
+	country := flag.String("country", "ua", "Choose the country")
+	flag.Parse()
+
+	w.GetData(city, country)
 	w.Render()
 }
