@@ -33,8 +33,8 @@ type Weather struct {
 }
 
 // http://api.openweathermap.org/data/2.5/forecast?appid=dcf5b77beaf67157ac55a0263f8def87&q=Sumy,ua
-func (w *Weather) GetData(city, country *string) {
-	url := ROOT_URL + API_KEY + "&q=" + *city + "," + *country
+func (w *Weather) GetData(city, country string) {
+	url := ROOT_URL + API_KEY + "&q=" + city + "," + country
 
 	res, err := http.Get(url)
 	if err != nil {
@@ -52,17 +52,31 @@ func (w *Weather) GetData(city, country *string) {
 	}
 }
 
-func (w *Weather) createBulk() (data [][]string) {
+func (w *Weather) createBulk(days int) (bulk [][]string) {
+	var countday int
+	var rowcounter int
+	current_day := strings.Split(w.List[0].Timestamp, " ")[0] // first day in the list
+
 	for _, msrmnt := range w.List {
 		celsius := FartoCel(msrmnt.Values.Temp)
 		datetime := strings.Split(msrmnt.Timestamp, " ") // []string{date, time}
+
+		if current_day != datetime[0] {
+			countday++
+			current_day = datetime[0]
+		}
+		if countday == days {
+			return bulk[:rowcounter]
+		}
+
 		row := append(datetime, strconv.FormatFloat(celsius, 'f', -1, 32), strconv.Itoa(msrmnt.Values.Hum))
-		data = append(data, row)
+		bulk = append(bulk, row)
+		rowcounter++
 	}
-	return data
+	return bulk[:rowcounter]
 }
 
-func (w *Weather) Render() {
+func (w *Weather) Render(days int) {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"date", "time", "temperature", "humidity"})
 	table.SetAutoMergeCells(true)
@@ -70,7 +84,7 @@ func (w *Weather) Render() {
 	table.SetCenterSeparator("|")
 	table.SetCaption(true, w.City.Name)
 
-	bulk := w.createBulk()
+	bulk := w.createBulk(days)
 	table.AppendBulk(bulk)
 
 	table.Render()
@@ -84,10 +98,11 @@ func FartoCel(f float64) float64 {
 func main() {
 	var w Weather
 
-	city := flag.String("city", "Sumy", "Choose the target city")
+	city := flag.String("city", "Kyiv", "Choose the target city")
 	country := flag.String("country", "ua", "Choose the country")
+	days := flag.Int("d", 1, "Number of the displayed days")
 	flag.Parse()
 
-	w.GetData(city, country)
-	w.Render()
+	w.GetData(*city, *country)
+	w.Render(*days)
 }
