@@ -52,8 +52,7 @@ func (w *Weather) GetData(city, country *string) {
 	}
 }
 
-func (w *Weather) createBulk() [][]string {
-	var data [][]string
+func (w *Weather) createBulk() (data [][]string) {
 	for _, msrmnt := range w.List {
 		celsius := FartoCel(msrmnt.Values.Temp)
 		datetime := strings.Split(msrmnt.Timestamp, " ") // []string{date, time}
