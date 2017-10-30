@@ -40,8 +40,8 @@ func (w *Weather) Stringify() [][]string {
 	var data [][]string
 	for _, msrmnt := range w.List {
 		celsius := FartoCel(msrmnt.Values.Temp)
-		s := []string{msrmnt.Date, strconv.FormatFloat(celsius, 'f', -1, 32), strconv.Itoa(msrmnt.Values.Hum)}
-		data = append(data, s)
+		row := []string{msrmnt.Date, strconv.FormatFloat(celsius, 'f', -1, 32), strconv.Itoa(msrmnt.Values.Hum)}
+		data = append(data, row)
 	}
 	return data
 }
