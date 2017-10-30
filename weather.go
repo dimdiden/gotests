@@ -51,7 +51,7 @@ func (w *Weather) GetData() {
 	}
 }
 
-func (w *Weather) stringify() [][]string {
+func (w *Weather) createBulk() [][]string {
 	var data [][]string
 	for _, msrmnt := range w.List {
 		celsius := FartoCel(msrmnt.Values.Temp)
@@ -70,7 +70,7 @@ func (w *Weather) Render() {
 	table.SetCenterSeparator("|")
 	table.SetCaption(true, w.City.Name)
 
-	bulk := w.stringify()
+	bulk := w.createBulk()
 	table.AppendBulk(bulk)
 
 	table.Render()
