@@ -35,7 +35,7 @@ type Weather struct {
 // http://api.openweathermap.org/data/2.5/forecast?appid=dcf5b77beaf67157ac55a0263f8def87&q=Sumy,ua
 func GetWeather(city, country string) Weather {
 	url := ROOT_URL + API_KEY + "&q=" + city + "," + country
-  var weather Weather
+	var weather Weather
 
 	res, err := http.Get(url)
 	if err != nil {
@@ -51,7 +51,7 @@ func GetWeather(city, country string) Weather {
 	if err := json.Unmarshal(body, &weather); err != nil {
 		panic(err)
 	}
-  return weather
+	return weather
 }
 
 func (w *Weather) createBulk(days int) (bulk [][]string) {
@@ -104,6 +104,6 @@ func main() {
 	days := flag.Int("d", 1, "Number of the displayed days")
 	flag.Parse()
 
-  w := GetWeather(*city, *country)
+	w := GetWeather(*city, *country)
 	w.Render(*days)
 }
