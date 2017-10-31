@@ -23,12 +23,22 @@ type Weather struct {
 	City struct {
 		Name string
 	}
-	List []struct {
-		Timestamp string `json:"dt_txt"`
-		Values    struct {
-			Temp float64
-			Hum  int `json:"humidity"`
-		} `json:"main"`
+	List []Measurement
+}
+
+type Measurement struct {
+	Timestamp string `json:"dt_txt"`
+	Values    struct {
+		Temp float64
+		Hum  int     `json:"humidity"`
+		Pres float64 `json:"pressure"`
+	} `json:"main"`
+	Description []struct {
+		Main     string
+		Specific string `json:"description"`
+	} `json:"weather"`
+	Clouds struct {
+		All int
 	}
 }
 
@@ -53,33 +63,48 @@ func GetWeather(city, country string) (w Weather) {
 	return
 }
 
-func (w *Weather) createBulk(days int) (bulk [][]string) {
+func (m *Measurement) createRow() (row []string) {
+	daytime := strings.Split(m.Timestamp, " ") // []string{date, time}
+
+	day, time := daytime[0], daytime[1]
+	celsius := strconv.FormatFloat(FartoCel(m.Values.Temp), 'f', -1, 32)
+	humidity := strconv.Itoa(m.Values.Hum)
+	pressure := strconv.FormatFloat(m.Values.Pres, 'f', -1, 32)
+	main := m.Description[0].Main
+	specific := m.Description[0].Specific
+	cloud := strconv.Itoa(m.Clouds.All)
+
+	row = append(row, day, time, celsius, main, specific, humidity, pressure, cloud)
+	return
+}
+
+func (w *Weather) createBulk(days int, ncol int) (bulk [][]string) {
 	var countday int
 	var rowcounter int
-	current_day := strings.Split(w.List[0].Timestamp, " ")[0] // first day in the list
+	current_day := strings.Split(w.List[0].Timestamp, " ")[0] // first day in the list "2017-10-31"
 
-	for _, msrmnt := range w.List {
-		celsius := FartoCel(msrmnt.Values.Temp)
-		datetime := strings.Split(msrmnt.Timestamp, " ") // []string{date, time}
+	for _, m := range w.List {
+		day := strings.Split(m.Timestamp, " ")[0]
 
-		if current_day != datetime[0] {
+		if current_day != day {
 			countday++
-			current_day = datetime[0]
+			current_day = day
 		}
 		if countday == days {
 			return bulk[:rowcounter]
 		}
 
-		row := append(datetime, strconv.FormatFloat(celsius, 'f', -1, 32), strconv.Itoa(msrmnt.Values.Hum))
+		row := m.createRow()[:ncol]
 		bulk = append(bulk, row)
 		rowcounter++
 	}
 	return bulk[:rowcounter]
 }
 
-func (w *Weather) Render(days int) {
+func (w *Weather) Render(days int, ncol int) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"date", "time", "temperature", "humidity"})
+	header := []string{"date", "time", "temperature", "main", "specific", "humidity", "pressure", "cloud"}
+	table.SetHeader(header[:ncol])
 	table.SetAutoMergeCells(true)
 	table.SetRowLine(true)
 	table.SetCenterSeparator("|")
@@ -87,7 +112,7 @@ func (w *Weather) Render(days int) {
 	caption := "City: " + w.City.Name + "; displayed days: " + strconv.Itoa(days)
 	table.SetCaption(true, caption)
 
-	bulk := w.createBulk(days)
+	bulk := w.createBulk(days, ncol)
 	table.AppendBulk(bulk)
 
 	table.Render()
@@ -103,8 +128,16 @@ func main() {
 	city := flag.String("city", "Kyiv", "Choose the target city")
 	country := flag.String("country", "ua", "Choose the country")
 	days := flag.Int("d", 1, "Number of the displayed days")
+	full := flag.Bool("f", false, "Enables detailed description")
 	flag.Parse()
 
+	var ncol int // number of columns
+	if *full {
+		ncol = 8
+	} else {
+		ncol = 5
+	}
+
 	w := GetWeather(*city, *country)
-	w.Render(*days)
+	w.Render(*days, ncol)
 }
