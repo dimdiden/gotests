@@ -131,11 +131,9 @@ func main() {
 	full := flag.Bool("f", false, "Enables detailed description")
 	flag.Parse()
 
-	var ncol int // number of columns
+	ncol := 5 // number of columns
 	if *full {
 		ncol = 8
-	} else {
-		ncol = 5
 	}
 
 	w := GetWeather(*city, *country)
